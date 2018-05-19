@@ -41,9 +41,12 @@ class QiniuUpload(object):
             return float('%.2f' % (size / 1024))
         return 0
 
-    def get_token(self):
+    def _get_file_link(self, filename):
+        return self._domain + '/' + filename
+
+    def get_token(self, policy=None):
         """Generate uploaded token"""
-        return self._qiniuer.upload_token(self._bucket)
+        return self._qiniuer.upload_token(self._bucket, policy=policy)
 
     def _legal_file_name(self, filename):
         """
@@ -71,8 +74,8 @@ class QiniuUpload(object):
         except Exception:
             return False
 
-    def _get_file_link(self, filename):
-        return self._domain + '/' + filename
+    def upload_call(self):
+        pass
 
     def delete_file(self, key):
         """
@@ -167,4 +170,6 @@ class QiniuUpload(object):
         ret, info = self._bucket_manager.batch(ops)
         return True if info.status_code == 200 else False
 
-    
+    def _method_result(self, method, *args):
+        pass
+
