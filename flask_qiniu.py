@@ -1,6 +1,4 @@
-import os
 import re
-import sys
 from datetime import datetime
 
 import qiniu
@@ -10,10 +8,10 @@ class QiniuUpload(object):
     """
     Integrated qiniu storage Flask plugin
     """
-
     def __init__(self, app=None):
         self.app = app
-        if app: self.init_app(app)
+        if app:
+            self.init_qiniu()
 
     def init_qiniu(self):
         self._qiniuer = qiniu.Auth(self.app.config.get('QN_ACCESS_KEY', ''),
@@ -65,14 +63,13 @@ class QiniuUpload(object):
         """
         token = self.get_token()
         key = self._legal_file_name(filename)
-        try:
-            if data:
-                ret, info = qiniu.put_data(token, key, data)
-            else:
-                ret, info = qiniu.put_file(token, key, path)
-            return True if info.status_code == 200 else False
-        except Exception:
-            return False
+
+        if data:
+            ret, info = qiniu.put_data(token, key, data)
+        else:
+            ret, info = qiniu.put_file(token, key, path)
+
+        return True if info.status_code == 200 else False
 
     def upload_call(self):
         pass
@@ -104,7 +101,7 @@ class QiniuUpload(object):
 
         return True if info.status_code == 200 else False
 
-    def get_all_file(self, prefix=None, limit=None, delimiter=None, marker=None, mime_type=()):
+    def get_file(self, prefix=None, limit=None, delimiter=None, marker=None, mime_type=()):
         """
         :param prefix: file prefix
         :param limit: list items
@@ -122,7 +119,7 @@ class QiniuUpload(object):
 
         files = []
         ret, eof, info = self._bucket_manager.list(self._bucket, prefix, marker, limit, delimiter)
-        if ret.get('items', []):
+        if ret and ret.get('items'):
             for i in ret.get('items'):
                 if i.get('mimeType', '').startswith(mime_type):
                     files.append({
@@ -169,7 +166,4 @@ class QiniuUpload(object):
         ops = qiniu.build_batch_delete(self._bucket, keys)
         ret, info = self._bucket_manager.batch(ops)
         return True if info.status_code == 200 else False
-
-    def _method_result(self, method, *args):
-        pass
 
